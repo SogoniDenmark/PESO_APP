@@ -171,7 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Widget _buildDesktopLayout() {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 1000),
+      constraints: const BoxConstraints(maxWidth: 1500),
       padding: const EdgeInsets.all(40),
       child: Card(
         elevation: 8,
@@ -181,42 +181,116 @@ class _RegisterPageState extends State<RegisterPage> {
           child: Row(
             children: [
               Expanded(
-                flex: 2,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset('images/logo.png', width: 300, height: 300, fit: BoxFit.contain),
-                    const SizedBox(height: 20),
-                    Text('PESO WEBSITE', style: GoogleFonts.bebasNeue(fontSize: 60)),
-                  ],
+                flex: 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/bgimage.png'),
+                      fit: BoxFit.cover,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Top-left text
+                      Positioned(
+                        top: 20,
+                        left: 20,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.7), // transparent white background
+                            borderRadius: BorderRadius.circular(8), // rounded corners
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'PESO MAKATI',
+                                style: GoogleFonts.bebasNeue(
+                                  fontSize: 80,
+                                  color: Colors.blueAccent, // make text readable on white
+                                ),
+                              ),
+                              Text(
+                                'JOB RECOMMENDATION APP',
+                                style: GoogleFonts.bebasNeue(
+                                  fontSize: 45,
+                                  color: Colors.blueAccent, // make text readable on white
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+
+                      // Bottom-left logo + PESO MAKATI text
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Image.asset(
+                              'assets/images/logo.png',
+                              width: 150,
+                              height: 150,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 40),
               Expanded(
-                flex: 3,
+                flex: 2,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Create Account', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 30),
-                    _buildInputField(_fullNameController, 'Full Name'),
-                    const SizedBox(height: 15),
-                    _buildInputField(_emailController, 'Email'),
-                    const SizedBox(height: 15),
-                    _buildInputField(_skillsController, 'Skills (comma-separated)'),
-                    const SizedBox(height: 15),
-                    _buildDropdownField(),
-                    const SizedBox(height: 15),
-                    _buildInputField(_passwordController, 'Password', obscureText: true),
-                    const SizedBox(height: 15),
-                    _buildInputField(_confirmPasswordController, 'Confirm Password', obscureText: true),
-                    const SizedBox(height: 25),
-                    _buildRegisterButton(),
+                    Container(
+                      padding: const EdgeInsets.all(40),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade200, // Light blue background
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Create Account',
+                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 30),
+                          _buildInputField(_fullNameController, 'Full Name'),
+                          const SizedBox(height: 15),
+                          _buildInputField(_emailController, 'Email'),
+                          const SizedBox(height: 15),
+                          _buildInputField(_skillsController, 'Skills (comma-separated)'),
+                          const SizedBox(height: 15),
+                          _buildDropdownField(),
+                          const SizedBox(height: 15),
+                          _buildInputField(_passwordController, 'Password', obscureText: true),
+                          const SizedBox(height: 15),
+                          _buildInputField(_confirmPasswordController, 'Confirm Password', obscureText: true),
+                          const SizedBox(height: 25),
+                          _buildRegisterButton(),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 25),
                     _buildLoginLink(),
                   ],
                 ),
               ),
+
             ],
           ),
         ),
@@ -242,7 +316,7 @@ class _RegisterPageState extends State<RegisterPage> {
               border: InputBorder.none,
               hintText: hintText,
               fillColor: Colors.grey[200],
-              filled: true,
+              filled: false,
             ),
           ),
         ),

@@ -106,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildDesktopLayout() {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 1000),
+      constraints: const BoxConstraints(maxWidth: 1500),
       padding: const EdgeInsets.all(40),
       child: Card(
         elevation: 8,
@@ -118,46 +118,112 @@ class _LoginPageState extends State<LoginPage> {
           child: Row(
             children: [
               Expanded(
-                flex: 2,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      width: 300,
-                      height: 300,
-                      fit: BoxFit.contain,
+                flex: 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/bgimage.png'),
+                      fit: BoxFit.cover,
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'PESO MAKATI',
-                      style: GoogleFonts.bebasNeue(fontSize: 60),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      bottomLeft: Radius.circular(20),
                     ),
-                    Text(
-                      'JOB RECOMMENDATION APP',
-                      style: GoogleFonts.bebasNeue(fontSize: 25),
-                    ),
-                  ],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Top-left text
+                      Positioned(
+                        top: 20,
+                        left: 20,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.7), // transparent white background
+                            borderRadius: BorderRadius.circular(8), // rounded corners
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'PESO MAKATI',
+                                style: GoogleFonts.bebasNeue(
+                                  fontSize: 80,
+                                  color: Colors.blueAccent, // make text readable on white
+                                ),
+                              ),
+                              Text(
+                                'JOB RECOMMENDATION APP',
+                                style: GoogleFonts.bebasNeue(
+                                  fontSize: 45,
+                                  color: Colors.blueAccent, // make text readable on white
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+
+                      // Bottom-left logo + PESO MAKATI text
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Image.asset(
+                              'assets/images/logo.png',
+                              width: 150,
+                              height: 150,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 40),
               Expanded(
-                flex: 3,
+                flex: 2,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildInputField(_emailController, 'Email'),
-                    const SizedBox(height: 20),
-                    _buildInputField(_passwordController, 'Password', obscureText: true),
-                    const SizedBox(height: 20),
-                    _buildForgotPasswordLink(),
-                    const SizedBox(height: 30),
-                    _buildLoginButton(),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade200, // Light blue background
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Log In',
+                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 30),
+                          _buildInputField(_emailController, 'Email'),
+                          const SizedBox(height: 20),
+                          _buildInputField(_passwordController, 'Password', obscureText: true),
+                          const SizedBox(height: 20),
+                          _buildForgotPasswordLink(),
+                          const SizedBox(height: 30),
+                          _buildLoginButton(),
+                          const SizedBox(height: 20),
+
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 30),
                     _buildRegisterLink(),
                   ],
                 ),
               ),
+
             ],
           ),
         ),
@@ -165,9 +231,10 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildInputField(TextEditingController controller, String hintText, {bool obscureText = false}) {
+  Widget _buildInputField(TextEditingController controller, String hintText,
+      {bool obscureText = false}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.grey[200],
@@ -183,7 +250,7 @@ class _LoginPageState extends State<LoginPage> {
               border: InputBorder.none,
               hintText: hintText,
               fillColor: Colors.grey[200],
-              filled: true,
+              filled: false,
             ),
           ),
         ),
