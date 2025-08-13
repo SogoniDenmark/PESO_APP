@@ -32,236 +32,253 @@ class _DashboardState extends State<Dashboard> {
         iconTheme: const IconThemeData(color: Colors.red),
         elevation: 0,
       ),
-      backgroundColor: Colors.grey.shade100,
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // --- NEW SECTION: TOP RECTANGLES ---
-            Row(
-              children: [
-                Expanded(
-                  child: _buildImageContainer(
-                    assetPath: 'assets/images/image 3.png',
-                    title: 'Recommended Jobs For You',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildImageContainer(
-                    assetPath: 'Rectangle 5.png',
-                    title: 'Jobs You’ve Been In',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildImageContainer(
-                assetPath: 'assets/images/image 4.png',
-              title: 'Latest Offerings',
-              height: 150,
-            ),
-            const SizedBox(height: 16),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildContainer(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // --- TOP RECTANGLES ---
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildImageContainer(
+                            assetPath: 'assets/images/image_3.png',
+                            title: 'Recommended Jobs For You',
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildImageContainer(
+                            assetPath: 'assets/images/Rectangle_5.png',
+                            title: 'Jobs You’ve Been In',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 30),
+                    _buildImageContainer(
+                      assetPath: 'assets/images/image_4.png',
+                      title: 'Latest Offerings',
+                      height: 250,
+                    ),
+                    const SizedBox(height: 30),
 
-            // --- JOB LIST & DETAILS ---
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('jobs')
-                    .orderBy('postedDate', descending: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  final jobs = snapshot.data!.docs;
-
-                  if (jobs.isEmpty) {
-                    return const Center(
+                    Center(
                       child: Text(
-                        'No jobs available',
-                        style: TextStyle(fontSize: 18, color: Colors.black54),
+                        'Job Listed',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.redAccent,
+                        ),
                       ),
-                    );
-                  }
+                    ),
+                    const SizedBox(height: 30),
 
-                  return isWide
-                      ? Row(
+                    // --- JOB LIST & DETAILS ---
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('jobs')
+                          .orderBy('postedDate', descending: true)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+
+                        final jobs = snapshot.data!.docs;
+
+                        if (jobs.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Text(
+                                'No jobs available',
+                                style: TextStyle(fontSize: 18, color: Colors.black54),
+                              ),
+                            ),
+                          );
+                        }
+
+                        const SizedBox(height: 16);
+
+
+                        return isWide
+                            ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // LEFT PANEL: Job List
-                            Expanded(
-                              flex: 2,
-                              child: _buildContainer(
-                                child: ListView.builder(
-                                  itemCount: jobs.length,
-                                  itemBuilder: (context, index) {
-                                    final data = jobs[index].data()
-                                        as Map<String, dynamic>;
 
-                                    return GestureDetector(
-                                      onTap: () => _selectJob(data),
-                                      child: Container(
-                                        margin:
-                                            const EdgeInsets.only(bottom: 8),
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: selectedJob == data
-                                              ? Colors.blue.shade50
-                                              : Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withOpacity(0.05),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              data['title'] ?? 'Untitled Job',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                                color: Colors.blueAccent,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              data['company'] ?? 'No Company',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              (data['postedDate'] as Timestamp)
-                                                  .toDate()
-                                                  .toLocal()
-                                                  .toString()
-                                                  .split(' ')[0],
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+
+                        // LEFT PANEL: Job List
+                            Expanded(
+
+                              flex: 2,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: jobs.length,
+                                itemBuilder: (context, index) {
+                                  final data = jobs[index].data()
+                                  as Map<String, dynamic>;
+
+                                  return GestureDetector(
+                                    onTap: () => _selectJob(data),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 8),
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: selectedJob == data
+                                            ? Colors.blue.shade50
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.05),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
                                       ),
-                                    );
-                                  },
-                                ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            data['title'] ?? 'Untitled Job',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                              color: Colors.blueAccent,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            data['company'] ?? 'No Company',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            (data['postedDate'] as Timestamp)
+                                                .toDate()
+                                                .toLocal()
+                                                .toString()
+                                                .split(' ')[0],
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                             const SizedBox(width: 16),
                             // RIGHT PANEL: Job Details
                             Expanded(
                               flex: 3,
-                              child: _buildContainer(
-                                child: selectedJob == null
-                                    ? const Center(
-                                        child: Text(
-                                          'Select a job to view details',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                      )
-                                    : _buildJobDetails(selectedJob!),
-                              ),
+                              child: selectedJob == null
+                                  ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(20),
+                                  child: Text(
+                                    'Select a job to view details',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ),
+                              )
+                                  : _buildJobDetails(selectedJob!),
                             ),
                           ],
                         )
-                      : Column(
+                            : Column(
                           children: [
-                            Expanded(
-                              flex: 2,
-                              child: _buildContainer(
-                                child: ListView.builder(
-                                  itemCount: jobs.length,
-                                  itemBuilder: (context, index) {
-                                    final data = jobs[index].data()
-                                        as Map<String, dynamic>;
-                                    return GestureDetector(
-                                      onTap: () => _selectJob(data),
-                                      child: Container(
-                                        margin:
-                                            const EdgeInsets.only(bottom: 8),
-                                        padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(
-                                          color: selectedJob == data
-                                              ? Colors.blue.shade50
-                                              : Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black
-                                                  .withOpacity(0.05),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: jobs.length,
+                              itemBuilder: (context, index) {
+                                final data = jobs[index].data()
+                                as Map<String, dynamic>;
+                                return GestureDetector(
+                                  onTap: () => _selectJob(data),
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 8),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: selectedJob == data
+                                          ? Colors.blue.shade50
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 3),
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              data['title'] ?? 'Untitled Job',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                                color: Colors.blueAccent,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              data['company'] ?? 'No Company',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Expanded(
-                              flex: 3,
-                              child: _buildContainer(
-                                child: selectedJob == null
-                                    ? const Center(
-                                        child: Text(
-                                          'Select a job to view details',
-                                          style: TextStyle(
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          data['title'] ?? 'Untitled Job',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
                                             fontSize: 16,
-                                            color: Colors.black54,
+                                            color: Colors.blueAccent,
                                           ),
                                         ),
-                                      )
-                                    : _buildJobDetails(selectedJob!),
-                              ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          data['company'] ?? 'No Company',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
+                            const SizedBox(height: 16),
+                            selectedJob == null
+                                ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Text(
+                                  'Select a job to view details',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            )
+                                : _buildJobDetails(selectedJob!),
                           ],
                         );
-                },
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -284,11 +301,12 @@ class _DashboardState extends State<Dashboard> {
       child: child,
     );
   }
+
   Widget _buildImageContainer({
     String? imageUrl,
     String? assetPath,
     required String title,
-    double height = 120,
+    double height = 300,
   }) {
     return Container(
       height: height,
@@ -324,7 +342,6 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-
 
   Widget _buildJobDetails(Map<String, dynamic> data) {
     return SingleChildScrollView(
