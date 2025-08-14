@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     AboutUs(),
     ApplicationTracker(),
     Dashboard(),
-    Notif(),
+    //Notif(),
   ];
 
   @override
@@ -156,7 +156,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         _buildDrawerItem(Icons.search, 'Find Jobs', 1),
         _buildDrawerItem(Icons.person, 'Profile', 2),
         _buildDrawerItem(Icons.track_changes, 'Application Tracker', 6),
-        _buildDrawerItem(Icons.notifications, 'Notification', 8),
+       // _buildDrawerItem(Icons.notifications, 'Notification', 8),
         const Spacer(),
         const Divider(),
         ListTile(

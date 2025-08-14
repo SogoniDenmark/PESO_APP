@@ -69,13 +69,13 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Image section
+          // Logo image above PESO WEBSITE
           Center(
             child: Image.asset(
-              'images/logo.png',
-              width: 250,
-              height: 250,
-              fit: BoxFit.cover,
+              'assets/images/logo.png', // match desktop path
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(height: 10),
@@ -83,6 +83,7 @@ class _LoginPageState extends State<LoginPage> {
           Text(
             'PESO WEBSITE',
             style: GoogleFonts.bebasNeue(fontSize: 70),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 50),
           // Email text-field
@@ -103,6 +104,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+
 
   Widget _buildDesktopLayout() {
     return Container(
