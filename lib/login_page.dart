@@ -1,7 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'admin_page/admin_homepage.dart';
 import 'forgot_pw_page.dart';
+import 'main_homepage.dart';
+import 'widgets/plus_sign_painter.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback showRegisterPage;
@@ -12,36 +16,11 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // text controllers
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  Future<void> signIn() async {
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-    } catch (e) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Login Failed'),
-            content: const Text('Invalid email or password. Please try again.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
+  bool _isHovering = false;
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -50,182 +29,116 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width > 600;
+  Future<void> _signIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    return Scaffold(
-      backgroundColor: Colors.lightBlue.shade100,
-      body: SafeArea(
-        child: Center(
-          child: isDesktop ? _buildDesktopLayout() : _buildMobileLayout(),
-        ),
-      ),
-    );
+    if (email.isEmpty || password.isEmpty) {
+      _showError('Please enter email and password.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // TODO: Replace hardcoded admin check with role-based auth from Firestore
+      if (email == 'admin123@gmail.com' && password == 'admin123') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminHomepage()),
+        );
+        return;
+      }
+
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      _showError(e.message ?? 'Login failed. Please try again.');
+    } catch (e) {
+      _showError('Invalid email or password. Please try again.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
-  Widget _buildMobileLayout() {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Logo image above PESO WEBSITE
-          Center(
-            child: Image.asset(
-              'assets/images/logo.png', // match desktop path
-              width: 200,
-              height: 200,
-              fit: BoxFit.contain,
-            ),
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Login Failed'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
           ),
-          const SizedBox(height: 10),
-          // Title
-          Text(
-            'PESO WEBSITE',
-            style: GoogleFonts.bebasNeue(fontSize: 70),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 50),
-          // Email text-field
-          _buildInputField(_emailController, 'Email'),
-          const SizedBox(height: 10),
-          // Password text-field
-          _buildInputField(_passwordController, 'Password', obscureText: true),
-          const SizedBox(height: 10),
-          // Forgot Password Link
-          _buildForgotPasswordLink(),
-          const SizedBox(height: 10),
-          // Sign in button
-          _buildLoginButton(),
-          const SizedBox(height: 25),
-          // Not a member? Register now
-          _buildRegisterLink(),
         ],
       ),
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
 
-  Widget _buildDesktopLayout() {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 1500),
-      padding: const EdgeInsets.all(40),
-      child: Card(
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+    // ✅ REMOVED MainScaffold - now just a Scaffold with its own AppBar
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Row(
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/bgimage.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              Expanded(
-                flex: 3,
-                child: Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/bgimage.png'),
-                      fit: BoxFit.cover,
-                    ),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      bottomLeft: Radius.circular(20),
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Top-left text
-                      Positioned(
-                        top: 20,
-                        left: 20,
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.7), // transparent white background
-                            borderRadius: BorderRadius.circular(8), // rounded corners
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'PESO MAKATI',
-                                style: GoogleFonts.bebasNeue(
-                                  fontSize: 80,
-                                  color: Colors.blueAccent, // make text readable on white
-                                ),
-                              ),
-                              Text(
-                                'JOB RECOMMENDATION APP',
-                                style: GoogleFonts.bebasNeue(
-                                  fontSize: 45,
-                                  color: Colors.blueAccent, // make text readable on white
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-
-                      // Bottom-left logo + PESO MAKATI text
-                      Positioned(
-                        bottom: 20,
-                        left: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Image.asset(
-                              'assets/images/logo.png',
-                              width: 150,
-                              height: 150,
-                              fit: BoxFit.contain,
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                        ),
-                      ),
-                    ],
+              // Background with plus pattern
+              Container(
+                width: 600,
+                height: screenHeight,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade700, Colors.blue.shade900],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
+                child: CustomPaint(
+                  painter: const PlusSignPainter(opacity: 0.2),
+                ),
               ),
-              const SizedBox(width: 40),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade200, // Light blue background
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            'Log In',
-                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 30),
-                          _buildInputField(_emailController, 'Email'),
-                          const SizedBox(height: 20),
-                          _buildInputField(_passwordController, 'Password', obscureText: true),
-                          const SizedBox(height: 20),
-                          _buildForgotPasswordLink(),
-                          const SizedBox(height: 30),
-                          _buildLoginButton(),
-                          const SizedBox(height: 20),
 
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    _buildRegisterLink(),
+              // Login form
+              SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 20),
+                    _buildLoginForm(),
                   ],
                 ),
               ),
-
             ],
           ),
         ),
@@ -233,81 +146,177 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildInputField(TextEditingController controller, String hintText,
-      {bool obscureText = false}) {
+  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          border: Border.all(color: Colors.white),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.only(left: 20.0),
-          child: TextField(
-            controller: controller,
-            obscureText: obscureText,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              hintText: hintText,
-              fillColor: Colors.grey[200],
-              filled: false,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildForgotPasswordLink() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+      padding: const EdgeInsets.only(top: 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ForgotPasswordPage(),
+          Image.asset(
+            'assets/images/logo.png',
+            width: 140,
+            height: 140,
+          ),
+          const SizedBox(width: 10),
+          Column(
+            children: [
+              Text(
+                'PESO MAKATI:',
+                style: GoogleFonts.bebasNeue(
+                  fontSize: 65,
+                  color: Colors.white,
                 ),
-              );
-            },
-            child: const Text(
-              'Forgot Password?',
-              style: TextStyle(
-                color: Colors.blue,
-                fontWeight: FontWeight.bold,
               ),
-            ),
+              Text(
+                'Job Recommendation APP',
+                style: GoogleFonts.bebasNeue(
+                  fontSize: 35,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
+  Widget _buildLoginForm() {
+    return Container(
+      padding: const EdgeInsets.all(30),
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.85),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      constraints: const BoxConstraints(maxWidth: 450),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Enter Your Makati Job Account',
+            style: GoogleFonts.bebasNeue(
+              fontSize: 24,
+              color: Colors.blue.shade700,
+            ),
+          ),
+          const SizedBox(height: 30),
+          _buildTextField(
+            controller: _emailController,
+            hintText: 'Email',
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 15),
+          _buildTextField(
+            controller: _passwordController,
+            hintText: 'Password',
+            obscureText: true,
+          ),
+          const SizedBox(height: 10),
+          _buildForgotPasswordLink(),
+          const SizedBox(height: 20),
+          _buildLoginButton(),
+          const SizedBox(height: 20),
+          _buildRegisterLink(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText && !_isPasswordVisible,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        hintText: hintText,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Colors.grey[200],
+        suffixIcon: obscureText
+            ? IconButton(
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.grey[700],
+                ),
+                onPressed: () {
+                  setState(() => _isPasswordVisible = !_isPasswordVisible);
+                },
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildForgotPasswordLink() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ForgotPasswordPage()),
+            );
+          },
+          child: const Text(
+            'Forgot Password?',
+            style: TextStyle(
+              color: Colors.blue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildLoginButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
       child: GestureDetector(
-        onTap: signIn,
-        child: Container(
-          padding: const EdgeInsets.all(20),
+        onTap: _isLoading ? null : _signIn,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(18),
+          width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.redAccent,
+            color: _isLoading
+                ? Colors.grey
+                : (_isHovering ? Colors.blue.shade800 : Colors.blue.shade700),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Center(
-            child: Text(
-              'Log In',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
+          child: Center(
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Log In',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
           ),
         ),
       ),
