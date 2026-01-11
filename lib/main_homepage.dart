@@ -101,14 +101,14 @@ class _MainScaffoldState extends State<MainScaffold> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isMobile ? "" : "Makati", // ✅ Hide text on mobile
+                      isMobile ? "Makati" : "Makati", // ✅ Hide text on mobile
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 30,
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(width: isMobile ? 0 : 8),
+                    SizedBox(width: isMobile ? 8 : 8),
                     Image.asset(
                       'assets/images/logo.png',
                       width: 40,
