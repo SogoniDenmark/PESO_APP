@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -15,7 +16,7 @@ class _Page3AdminState extends State<Page3Admin> {
 
   bool _isLoading = true;
   List<Map<String, dynamic>> _jobSeekers = [];
-  List<Map<String, dynamic>> _admins = [];
+  List<Map<String, dynamic>> _employers = [];
   String _searchQuery = '';
 
   // Summary statistics
@@ -42,7 +43,7 @@ class _Page3AdminState extends State<Page3Admin> {
     try {
       await Future.wait([
         _loadJobSeekers(),
-        _loadAdmins(),
+        _loadEmployers(),
       ]);
     } catch (e) {
       debugPrint('Error loading data: $e');
@@ -102,31 +103,32 @@ class _Page3AdminState extends State<Page3Admin> {
     });
   }
 
-  Future<void> _loadAdmins() async {
-    // Try to load from admins collection, fallback to empty if not exists
+  Future<void> _loadEmployers() async {
+    // Load employer registrations instead of admins
     try {
-      final snapshot = await FirebaseFirestore.instance.collection('admins').get();
+      final snapshot = await FirebaseFirestore.instance.collection('employer_registrations').get();
 
-      List<Map<String, dynamic>> admins = [];
+      List<Map<String, dynamic>> employers = [];
       for (final doc in snapshot.docs) {
         final data = doc.data();
-        admins.add({
+        employers.add({
           'id': doc.id,
-          'name': data['name'] ?? data['fullName'] ?? 'Admin',
-          'role': data['role'] ?? 'Moderator',
-          'email': data['email'] ?? '-',
-          'status': data['status'] ?? 'Active',
-          'lastLogin': _formatTimestamp(data['lastLogin']),
+          'companyName': data['companyName'] ?? '-',
+          'contactPerson': data['contactPerson'] ?? '-',
+          'contactNumber': data['contactNumber'] ?? '-',
+          'status': data['status'] ?? 'pending',
+          'createdAt': _formatTimestamp(data['createdAt']),
+          'documents': data['documents'] ?? {},
         });
       }
 
       setState(() {
-        _admins = admins;
+        _employers = employers;
       });
     } catch (e) {
-      // If admins collection doesn't exist, use empty list
+      // If collection doesn't exist or error, use empty list
       setState(() {
-        _admins = [];
+        _employers = [];
       });
     }
   }
@@ -371,7 +373,7 @@ class _Page3AdminState extends State<Page3Admin> {
                     constraints: const BoxConstraints(minWidth: 900),
                     child: DataTable(
                       columnSpacing: 20,
-                      headingRowColor: WidgetStateProperty.all(Colors.indigo[50]),
+                      headingRowColor: MaterialStateProperty.all(Colors.indigo[50]),
                       border: TableBorder.symmetric(
                         inside: BorderSide(color: Colors.grey[300]!),
                       ),
@@ -380,7 +382,6 @@ class _Page3AdminState extends State<Page3Admin> {
                         DataColumn(label: Text("Email", style: TextStyle(fontWeight: FontWeight.w600))),
                         DataColumn(label: Text("Phone", style: TextStyle(fontWeight: FontWeight.w600))),
                         DataColumn(label: Text("Applications", style: TextStyle(fontWeight: FontWeight.w600))),
-                        DataColumn(label: Text("Status", style: TextStyle(fontWeight: FontWeight.w600))),
                         DataColumn(label: Text("Date Joined", style: TextStyle(fontWeight: FontWeight.w600))),
                         DataColumn(label: Text("Actions", style: TextStyle(fontWeight: FontWeight.w600))),
                       ],
@@ -390,9 +391,8 @@ class _Page3AdminState extends State<Page3Admin> {
                           DataCell(Text(js['email'], overflow: TextOverflow.ellipsis)),
                           DataCell(Text(js['phone'])),
                           DataCell(Text(js['appliedCount'].toString())),
-                          DataCell(_buildStatusBadge(js['status'])),
                           DataCell(Text(js['dateJoined'])),
-                          DataCell(_buildActionsDropdown(js['id'], 'jobseeker')),
+                          DataCell(TextButton(onPressed: () => _showUserProfile(js['id']), child: const Text('View'))),
                         ],
                       )).toList(),
                     ),
@@ -456,14 +456,14 @@ class _Page3AdminState extends State<Page3Admin> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Admin/Staff",
+              "Employer Registrations",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo),
             ),
             const SizedBox(height: 16),
-            if (_admins.isEmpty)
+            if (_employers.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32),
-                child: Center(child: Text('No admin accounts found')),
+                child: Center(child: Text('No employer registrations found')),
               )
             else
               Scrollbar(
@@ -477,26 +477,29 @@ class _Page3AdminState extends State<Page3Admin> {
                     constraints: const BoxConstraints(minWidth: 700),
                     child: DataTable(
                       columnSpacing: 24,
-                      headingRowColor: WidgetStateProperty.all(Colors.indigo[50]),
+                      headingRowColor: MaterialStateProperty.all(Colors.indigo[50]),
                       border: TableBorder.symmetric(
                         inside: BorderSide(color: Colors.grey[300]!),
                       ),
                       columns: const [
-                        DataColumn(label: Text("Name", style: TextStyle(fontWeight: FontWeight.w600))),
-                        DataColumn(label: Text("Role", style: TextStyle(fontWeight: FontWeight.w600))),
-                        DataColumn(label: Text("Email", style: TextStyle(fontWeight: FontWeight.w600))),
+                        DataColumn(label: Text("Company", style: TextStyle(fontWeight: FontWeight.w600))),
+                        DataColumn(label: Text("Contact", style: TextStyle(fontWeight: FontWeight.w600))),
+                        DataColumn(label: Text("Phone", style: TextStyle(fontWeight: FontWeight.w600))),
                         DataColumn(label: Text("Status", style: TextStyle(fontWeight: FontWeight.w600))),
-                        DataColumn(label: Text("Last Login", style: TextStyle(fontWeight: FontWeight.w600))),
+                        DataColumn(label: Text("Registered", style: TextStyle(fontWeight: FontWeight.w600))),
                         DataColumn(label: Text("Actions", style: TextStyle(fontWeight: FontWeight.w600))),
                       ],
-                      rows: _admins.map((admin) => DataRow(
+                      rows: _employers.map((emp) => DataRow(
                         cells: [
-                          DataCell(Text(admin['name'])),
-                          DataCell(Text(admin['role'])),
-                          DataCell(Text(admin['email'])),
-                          DataCell(_buildStatusBadge(admin['status'])),
-                          DataCell(Text(admin['lastLogin'])),
-                          DataCell(_buildActionsDropdown(admin['id'], 'admin')),
+                          DataCell(Text(emp['companyName'] ?? '-')),
+                          DataCell(Text(emp['contactPerson'] ?? '-')),
+                          DataCell(Text(emp['contactNumber'] ?? '-')),
+                          DataCell(_buildStatusBadge(emp['status'] ?? 'pending')),
+                          DataCell(Text(emp['createdAt'] ?? '-')),
+                          DataCell(TextButton(
+                            onPressed: () => _showEmployerDocuments(emp),
+                            child: const Text('View'),
+                          )),
                         ],
                       )).toList(),
                     ),
@@ -507,7 +510,7 @@ class _Page3AdminState extends State<Page3Admin> {
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                "Showing ${_admins.length} records",
+                "Showing ${_employers.length} records",
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ),
@@ -689,20 +692,112 @@ class _Page3AdminState extends State<Page3Admin> {
           }
 
           final data = snapshot.data!.data() as Map<String, dynamic>;
+
+          // Make a mutable copy of appliedJobs so we can update statuses locally
+          final List<Map<String, dynamic>> applications =
+              ((data['appliedJobs'] as List?) ?? [])
+                  .map((e) => Map<String, dynamic>.from(e as Map<String, dynamic>))
+                  .toList();
+
           return AlertDialog(
             title: Text(data['fullName'] ?? 'User Profile'),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _profileRow('Email', data['email']),
-                  _profileRow('Phone', data['mobileNumber'] ?? data['phone']),
-                  _profileRow('Address', data['presentAddress']),
-                  _profileRow('Education', data['educationalLevel']),
-                  _profileRow('Applications', (data['appliedJobs'] as List?)?.length.toString() ?? '0'),
-                ],
-              ),
+            content: StatefulBuilder(
+              builder: (context, setStateDialog) {
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Resume', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      if ((data['resumeUrl'] as String?)?.isNotEmpty ?? false)
+                        TextButton(
+                          onPressed: () async {
+                            final url = data['resumeUrl'] as String;
+                            try {
+                              final uri = Uri.parse(url);
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Could not open resume')),
+                              );
+                            }
+                          },
+                          child: const Text('Open Resume'),
+                        )
+                      else
+                        const Text('No resume uploaded'),
+
+                      const SizedBox(height: 12),
+                      const Text('Applications', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      if (applications.isEmpty)
+                        const Text('No applications found')
+                      else
+                        Column(
+                          children: List.generate(applications.length, (i) {
+                            final app = applications[i];
+                            final jobId = app['jobId']?.toString() ?? '-';
+                            final jobTitle = app['jobTitle']?.toString() ?? jobId;
+                            final status = app['status']?.toString() ?? 'Pending';
+
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(jobTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                          const SizedBox(height: 4),
+                                          Text('Job ID: $jobId', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _buildStatusBadge(status),
+                                    const SizedBox(width: 8),
+                                    PopupMenuButton<String>(
+                                      icon: const Icon(Icons.edit),
+                                      itemBuilder: (context) => ['Pending', 'Hired']
+                                          .map((s) => PopupMenuItem(value: s, child: Text(s)))
+                                          .toList(),
+                                      onSelected: (newStatus) async {
+                                        if (newStatus == status) return;
+                                        // Update local copy
+                                        applications[i]['status'] = newStatus;
+                                        setStateDialog(() {});
+
+                                        // Persist to Firestore: overwrite appliedJobs for this user
+                                        try {
+                                          await FirebaseFirestore.instance.collection('users').doc(userId).update({
+                                            'appliedJobs': applications,
+                                          });
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Application status updated to $newStatus')),
+                                          );
+                                          // Refresh main dashboard stats
+                                          await _loadData();
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Failed to update status: $e')),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                    ],
+                  ),
+                );
+              },
             ),
             actions: [
               TextButton(
@@ -799,6 +894,59 @@ class _Page3AdminState extends State<Page3Admin> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
             child: const Text('Suspend', style: TextStyle(color: Colors.white)),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showEmployerDocuments(Map<String, dynamic> emp) {
+    final docs = emp['documents'] as Map<String, dynamic>? ?? {};
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(emp['companyName'] ?? 'Employer Documents'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (docs.isEmpty) const Text('No documents attached')
+              else
+                ...docs.entries.map((e) {
+                  final key = e.key;
+                  final url = e.value?.toString();
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(child: Text(key)),
+                        if (url != null && url.isNotEmpty)
+                          TextButton(
+                            onPressed: () async {
+                              try {
+                                final uri = Uri.parse(url);
+                                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Could not open document')),
+                                );
+                              }
+                            },
+                            child: const Text('Open'),
+                          )
+                        else
+                          const Text('-'),
+                      ],
+                    ),
+                  );
+                }).toList(),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
         ],
       ),
     );
